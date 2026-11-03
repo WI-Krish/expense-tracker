@@ -1,0 +1,58 @@
+[
+  {
+    "id": "1",
+    "title": "Groceries",
+    "amount": 1750,
+    "category": "Food",
+    "date": "2026-11-01",
+    "note": "Weekly essentials"
+  },
+  {
+    "id": "2",
+    "title": "Tnsportation Pass",
+    "amount": 3000,
+    "category": "Transport",
+    "date": "2026-11-02",
+    "note": "Commuter recharge"
+  },
+  {
+    "id": "3",
+    "title": "Internet Service",
+    "amount": 1500,
+    "category": "Bills",
+    "date": "2026-11-02",
+    "note": "Monthly fiber broadband"
+  },
+  {
+    "id": "1793687817102",
+    "title": "Winter Jacket",
+    "amount": 4500,
+    "category": "Shopping",
+    "date": "2026-11-02",
+    "note": "Warm clothing sale"
+  },
+  {
+    "id": "1793687817157",
+    "title": "Movie Tickets & Popcorn",
+    "amount": 750,
+    "category": "Entertainment",
+    "date": "2026-11-03",
+    "note": "Weekend cinema"
+  },
+  {
+    "id": "1793687817174",
+    "title": "Pharmacy & Vitamins",
+    "amount": 2800,
+    "category": "Health",
+    "date": "2026-11-03",
+    "note": "Supplements refill"
+  },
+  {
+    "id": "1793687817185",
+    "title": "Courier & Shipping",
+    "amount": 150,
+    "category": "Other",
+    "date": "2026-11-01",
+    "note": "Package delivery"
+  }
+]

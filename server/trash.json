@@ -1,0 +1,11 @@
+[
+  {
+    "id": "1793691662549",
+    "title": "Test",
+    "amount": 790,
+    "category": "Health",
+    "date": "2026-11-03",
+    "note": "delete test",
+    "deletedAt": "2026-11-03T07:41:09.065Z"
+  }
+]
