@@ -138,7 +138,7 @@ app.get(['/api/expenses/:id', '/expenses/:id'], (req, res) => {
 // POST create expense
 app.post(['/api/expenses', '/expenses'], (req, res) => {
   const expenses = loadExpenses();
-  const { title, amount, category, date, note } = req.body || {};
+  const { title, amount, category, date, note, currency } = req.body || {};
 
   if (!title || !amount || !date) {
     return res.status(400).json({ message: 'Title, amount, and date are required' });
@@ -150,7 +150,8 @@ app.post(['/api/expenses', '/expenses'], (req, res) => {
     amount: Math.round(Number(amount) * 100) / 100,
     category: category || 'Other',
     date,
-    note: (note || '').trim()
+    note: (note || '').trim(),
+    currency: currency || 'INR'
   };
 
   expenses.push(newExpense);
@@ -164,14 +165,15 @@ app.put(['/api/expenses/:id', '/expenses/:id'], (req, res) => {
   const idx = expenses.findIndex(e => e.id === req.params.id);
   if (idx === -1) return res.status(404).json({ message: 'Expense not found' });
 
-  const { title, amount, category, date, note } = req.body || {};
+  const { title, amount, category, date, note, currency } = req.body || {};
   expenses[idx] = {
     ...expenses[idx],
     title: title !== undefined ? title.trim() : expenses[idx].title,
     amount: amount !== undefined ? Math.round(Number(amount) * 100) / 100 : expenses[idx].amount,
     category: category !== undefined ? category : expenses[idx].category,
     date: date !== undefined ? date : expenses[idx].date,
-    note: note !== undefined ? note.trim() : expenses[idx].note
+    note: note !== undefined ? note.trim() : expenses[idx].note,
+    currency: currency !== undefined ? currency : (expenses[idx].currency || 'INR')
   };
 
   saveExpenses(expenses);

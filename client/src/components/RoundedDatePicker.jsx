@@ -159,7 +159,7 @@ export default function RoundedDatePicker({
           justifyContent: 'space-between',
           cursor: 'pointer',
           width: '100%',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--surface)',
           userSelect: 'none'
         }}
       >
@@ -173,7 +173,7 @@ export default function RoundedDatePicker({
           height="16"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#64748b"
+          stroke="var(--text-secondary)"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -195,10 +195,10 @@ export default function RoundedDatePicker({
             top: 'calc(100% + 6px)',
             left: 0,
             width: '280px',
-            backgroundColor: '#ffffff',
+            backgroundColor: 'var(--surface)',
             border: '1px solid var(--border)',
             borderRadius: '16px',
-            boxShadow: '0 12px 28px -4px rgba(15, 23, 42, 0.14), 0 4px 12px -2px rgba(15, 23, 42, 0.06)',
+            boxShadow: 'var(--shadow-lg)',
             padding: '16px',
             zIndex: 1050,
             animation: 'dropdownFadeIn 0.15s ease-out'
@@ -220,7 +220,7 @@ export default function RoundedDatePicker({
                 padding: 0,
                 border: '1px solid var(--border)',
                 borderRadius: '8px',
-                background: '#ffffff',
+                background: 'var(--surface)',
                 color: 'var(--text-secondary)',
                 display: 'flex',
                 alignItems: 'center',
@@ -232,7 +232,7 @@ export default function RoundedDatePicker({
               ‹
             </button>
 
-            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#0f172a' }}>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
               {MONTH_NAMES[month]} {year}
             </span>
 
@@ -245,7 +245,7 @@ export default function RoundedDatePicker({
                 padding: 0,
                 border: '1px solid var(--border)',
                 borderRadius: '8px',
-                background: '#ffffff',
+                background: 'var(--surface)',
                 color: 'var(--text-secondary)',
                 display: 'flex',
                 alignItems: 'center',
@@ -316,9 +316,9 @@ export default function RoundedDatePicker({
                     margin: '0 auto',
                     padding: 0,
                     borderRadius: '9px',
-                    border: isToday && !selected ? '1px solid #0f172a' : 'none',
-                    backgroundColor: selected ? '#0f172a' : 'transparent',
-                    color: selected ? '#ffffff' : 'var(--text-primary)',
+                    border: isToday && !selected ? '1px solid var(--border-focus)' : 'none',
+                    backgroundColor: selected ? 'var(--primary)' : 'transparent',
+                    color: selected ? 'var(--primary-text)' : 'var(--text-primary)',
                     fontWeight: selected || isToday ? 600 : 500,
                     fontSize: '0.825rem',
                     cursor: 'pointer',
@@ -328,7 +328,7 @@ export default function RoundedDatePicker({
                     transition: 'all 0.12s ease'
                   }}
                   onMouseEnter={(e) => {
-                    if (!selected) e.currentTarget.style.backgroundColor = '#f1f5f9';
+                    if (!selected) e.currentTarget.style.backgroundColor = 'var(--surface-hover)';
                   }}
                   onMouseLeave={(e) => {
                     if (!selected) e.currentTarget.style.backgroundColor = 'transparent';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const CATEGORY_COLORS = {
   Food: '#f59e0b',
@@ -24,22 +24,29 @@ const CATEGORY_ICONS = {
  * Summary component – displays clean minimalist metric cards and stable category breakdown.
  */
 export default function Summary({
-  expenses,
+  expenses = [],
   currencySymbol = '₹',
+  currencyCode = 'INR',
   monthlyLimit = 10000,
   onUpdateMonthlyLimit
 }) {
   const [isEditingLimit, setIsEditingLimit] = useState(false);
-  const [tempLimit, setTempLimit] = useState(monthlyLimit ? monthlyLimit.toString() : '10000');
+  const [tempLimit, setTempLimit] = useState(monthlyLimit ? Math.round(monthlyLimit).toString() : '10000');
 
-  const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  useEffect(() => {
+    setTempLimit(monthlyLimit ? Math.round(monthlyLimit).toString() : '10000');
+  }, [monthlyLimit]);
+
+  const getAmount = (e) => Number(e.convertedAmount !== undefined ? e.convertedAmount : e.amount) || 0;
+
+  const total = expenses.reduce((sum, e) => sum + getAmount(e), 0);
   const count = expenses.length;
 
   // Monthly Limit calculations based on current YYYY-MM
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const currentMonthExpenses = expenses.filter((e) => (e.date || '').startsWith(currentMonthKey));
-  const currentMonthTotal = currentMonthExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const currentMonthTotal = currentMonthExpenses.reduce((sum, e) => sum + getAmount(e), 0);
   const remaining = Math.max(0, monthlyLimit - currentMonthTotal);
   const percentUsed = monthlyLimit > 0 ? Math.round((currentMonthTotal / monthlyLimit) * 100) : 0;
   const isOverLimit = currentMonthTotal > monthlyLimit;
@@ -56,7 +63,7 @@ export default function Summary({
   };
 
   const categoryTotals = expenses.reduce((acc, e) => {
-    acc[e.category] = (acc[e.category] || 0) + Number(e.amount);
+    acc[e.category] = (acc[e.category] || 0) + getAmount(e);
     return acc;
   }, {});
 
@@ -70,7 +77,7 @@ export default function Summary({
         <div className="metric-card">
           <div className="metric-label">Total Spending</div>
           <div className="metric-value">
-            {currencySymbol}{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {currencySymbol} {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="metric-subtitle">Across {count} recorded expense{count === 1 ? '' : 's'}</div>
         </div>
@@ -85,8 +92,8 @@ export default function Summary({
         <div
           className="metric-card"
           style={{
-            borderColor: isOverLimit ? '#fca5a5' : isWarning ? '#fde68a' : 'var(--border)',
-            backgroundColor: isOverLimit ? '#fffafa' : 'var(--surface)'
+            borderColor: isOverLimit ? 'var(--danger)' : isWarning ? '#f59e0b' : 'var(--border)',
+            backgroundColor: isOverLimit ? 'var(--danger-light)' : 'var(--surface)'
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -166,7 +173,7 @@ export default function Summary({
           ) : (
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
               <span className="metric-value" style={{ fontSize: '1.4rem' }}>
-                {currencySymbol}{Number(monthlyLimit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                {currencySymbol} {Number(monthlyLimit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
               </span>
               <span
                 style={{
@@ -184,7 +191,7 @@ export default function Summary({
           )}
 
           {/* Mini Progress Bar */}
-          <div style={{ height: '4px', width: '100%', backgroundColor: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
+          <div style={{ height: '4px', width: '100%', backgroundColor: 'var(--surface-hover)', borderRadius: '9999px', overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
@@ -198,11 +205,11 @@ export default function Summary({
           <div className="metric-subtitle" style={{ fontSize: '0.74rem', margin: 0 }}>
             {isOverLimit ? (
               <span style={{ color: '#b91c1c', fontWeight: 600 }}>
-                Over budget by {currencySymbol}{(currentMonthTotal - monthlyLimit).toFixed(2)}
+                Over budget by {currencySymbol} {(currentMonthTotal - monthlyLimit).toFixed(2)}
               </span>
             ) : (
               <span>
-                Spent {currencySymbol}{currentMonthTotal.toFixed(0)} • <strong style={{ color: '#15803d' }}>{currencySymbol}{remaining.toFixed(0)} left</strong>
+                Spent {currencySymbol} {currentMonthTotal.toFixed(0)} • <strong style={{ color: '#15803d' }}>{currencySymbol} {remaining.toFixed(0)} left</strong>
               </span>
             )}
           </div>
@@ -216,7 +223,7 @@ export default function Summary({
           </div>
           <div className="metric-subtitle">
             {sortedCategories.length > 0
-              ? `${currencySymbol}${sortedCategories[0][1].toFixed(2)} (${Math.round((sortedCategories[0][1] / (total || 1)) * 100)}%)`
+              ? `${currencySymbol} ${sortedCategories[0][1].toFixed(2)} (${Math.round((sortedCategories[0][1] / (total || 1)) * 100)}%)`
               : 'No expenses yet'}
           </div>
         </div>
@@ -255,7 +262,7 @@ export default function Summary({
                       height: '100%',
                       transition: 'width 0.15s ease'
                     }}
-                    title={`${cat}: ${currencySymbol}${amt.toFixed(2)} (${pct.toFixed(1)}%)`}
+                    title={`${cat}: ${currencySymbol} ${amt.toFixed(2)} (${pct.toFixed(1)}%)`}
                   />
                 );
               })}
@@ -274,7 +281,7 @@ export default function Summary({
                       backgroundColor: CATEGORY_COLORS[cat] || '#64748b'
                     }} />
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{cat}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>{currencySymbol}{amt.toFixed(0)} ({pct}%)</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{currencySymbol} {amt.toFixed(0)} ({pct}%)</span>
                   </div>
                 );
               })}

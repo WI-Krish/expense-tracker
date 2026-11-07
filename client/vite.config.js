@@ -8,7 +8,7 @@ export default defineConfig({
     // Proxy API calls to the backend during development
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: 'https://expense-tracker-5i3x.onrender.com',
         changeOrigin: true,
         secure: false
       }

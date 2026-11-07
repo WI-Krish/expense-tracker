@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 /**
- * RoundedSelect - Custom accessible dropdown component
- * Renders an attractive rounded box both when closed and when opened as a floating menu.
+ * RoundedSelect - Clean, minimalist, accessible dropdown component
  */
 export default function RoundedSelect({
   value,
@@ -78,7 +77,8 @@ export default function RoundedSelect({
           cursor: 'pointer',
           textAlign: 'left',
           width: '100%',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--surface)',
+          color: 'var(--text-primary)',
           userSelect: 'none'
         }}
       >
@@ -95,7 +95,7 @@ export default function RoundedSelect({
           height="16"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#64748b"
+          stroke="var(--text-secondary)"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -120,10 +120,10 @@ export default function RoundedSelect({
             top: 'calc(100% + 6px)',
             left: 0,
             right: 0,
-            backgroundColor: '#ffffff',
+            backgroundColor: 'var(--surface)',
             border: '1px solid var(--border)',
             borderRadius: '14px',
-            boxShadow: '0 12px 28px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06)',
+            boxShadow: 'var(--shadow-lg)',
             padding: '6px',
             zIndex: 1000,
             maxHeight: '260px',
@@ -147,13 +147,13 @@ export default function RoundedSelect({
                   cursor: 'pointer',
                   fontSize: '0.885rem',
                   fontWeight: isSelected ? 600 : 500,
-                  color: isSelected ? '#0f172a' : 'var(--text-primary)',
-                  backgroundColor: isSelected ? '#f1f5f9' : 'transparent',
+                  color: isSelected ? 'var(--primary)' : 'var(--text-primary)',
+                  backgroundColor: isSelected ? 'var(--surface-hover)' : 'transparent',
                   transition: 'background-color 0.12s ease, color 0.12s ease',
                   marginBottom: '2px'
                 }}
                 onMouseEnter={(e) => {
-                  if (!isSelected) e.currentTarget.style.backgroundColor = '#f8fafc';
+                  if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--surface-hover)';
                 }}
                 onMouseLeave={(e) => {
                   if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
@@ -170,7 +170,7 @@ export default function RoundedSelect({
                     height="15"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#0f172a"
+                    stroke="var(--primary)"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"

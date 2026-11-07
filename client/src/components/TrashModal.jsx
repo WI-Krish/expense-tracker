@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { convertCurrency, getCurrencyInfo } from '../utils/currencies';
 
 const CATEGORY_ICONS = {
   Food: '🍔',
@@ -17,7 +18,9 @@ export default function TrashModal({
   onRestore,
   onPermanentDelete,
   onEmptyTrash,
-  currencySymbol = '₹'
+  currencySymbol = '₹',
+  currencyCode = 'INR',
+  exchangeRates = {}
 }) {
   // Close on Escape key press
   useEffect(() => {
@@ -31,7 +34,10 @@ export default function TrashModal({
 
   if (!isOpen) return null;
 
-  const totalTrashAmount = trash.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const totalTrashAmount = trash.reduce(
+    (sum, item) => sum + convertCurrency(item.amount, item.currency || 'INR', currencyCode, exchangeRates),
+    0
+  );
 
   const formatDeletedDate = (isoStr) => {
     if (!isoStr) return '';
@@ -87,7 +93,7 @@ export default function TrashModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: '#ffffff'
+            backgroundColor: 'var(--surface)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -96,8 +102,8 @@ export default function TrashModal({
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                backgroundColor: '#fee2e2',
-                color: '#ef4444',
+                backgroundColor: 'var(--danger-light)',
+                color: 'var(--danger)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -113,7 +119,7 @@ export default function TrashModal({
                 </h3>
                 <span
                   style={{
-                    backgroundColor: '#f1f5f9',
+                    backgroundColor: 'var(--surface-hover)',
                     color: 'var(--text-secondary)',
                     fontSize: '0.75rem',
                     fontWeight: 600,
@@ -124,6 +130,21 @@ export default function TrashModal({
                 >
                   {trash.length} {trash.length === 1 ? 'item' : 'items'}
                 </span>
+                {trash.length > 0 && (
+                  <span
+                    style={{
+                      backgroundColor: 'var(--surface-hover)',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      border: '1px solid var(--border)'
+                    }}
+                  >
+                    Total: {currencySymbol} {totalTrashAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                )}
               </div>
               <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 Restore items back to active expenses or delete them permanently.
@@ -147,7 +168,7 @@ export default function TrashModal({
               type="button"
               onClick={onClose}
               style={{
-                background: '#f1f5f9',
+                background: 'var(--surface-hover)',
                 border: 'none',
                 color: 'var(--text-secondary)',
                 width: '32px',
@@ -175,7 +196,7 @@ export default function TrashModal({
             overflowY: 'auto',
             flex: 1,
             maxHeight: 'calc(85vh - 130px)',
-            backgroundColor: '#fafbfc'
+            backgroundColor: 'var(--bg-main)'
           }}
         >
           {trash.length === 0 ? (
@@ -207,7 +228,7 @@ export default function TrashModal({
                 <div
                   key={item.id}
                   style={{
-                    backgroundColor: '#ffffff',
+                    backgroundColor: 'var(--surface)',
                     border: '1px solid var(--border)',
                     borderRadius: '12px',
                     padding: '14px 16px',
@@ -247,9 +268,22 @@ export default function TrashModal({
 
                   {/* Middle: Amount */}
                   <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                      {currencySymbol}{Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>
+                    {(() => {
+                      const converted = convertCurrency(item.amount, item.currency || 'INR', currencyCode, exchangeRates);
+                      const isOrig = item.currency && item.currency !== currencyCode;
+                      return (
+                        <>
+                          <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                            {currencySymbol} {converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                          {isOrig && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                              orig. {getCurrencyInfo(item.currency).symbol} {Number(item.amount).toFixed(2)} {item.currency}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Right: Actions */}
@@ -314,7 +348,7 @@ export default function TrashModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: '#ffffff'
+            backgroundColor: 'var(--surface)'
           }}
         >
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
