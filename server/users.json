@@ -1,0 +1,16 @@
+[
+  {
+    "id": "user_demo_1",
+    "name": "Demo User",
+    "email": "demo@example.com",
+    "passwordHash": "98374efd9cd9549a9358ce8db3482bac:14fd865ff135919ddbbdcb0321d4060a76973737d86eeb6747060d0dc3d93df23990d04ea4377f434cbae2b9444e6e006e4d07732da46bf38e61da438677ca7f",
+    "createdAt": "2026-11-20T07:59:30.491Z"
+  },
+  {
+    "id": "usr_mwopa1uscdh73",
+    "name": "Test",
+    "email": "test@mail.com",
+    "passwordHash": "0402582deb7e3f2d01a86caa278b7a5f:ea10ae16e47e205b144248c786add3d1997861fac0d3dd8dc288f26ecabe3038b3253ab3bd4c83ba2935fc7c49078c002b2cc77e86bad451e8c0178618a3554e",
+    "createdAt": "2026-11-20T08:11:32.453Z"
+  }
+]

@@ -4,17 +4,19 @@ import ExpenseList from './components/ExpenseList';
 import Summary from './components/Summary';
 import TrashModal from './components/TrashModal';
 import CurrencyTravelWidget from './components/CurrencyTravelWidget';
+import AuthPage from './components/AuthPage';
+import { getCurrentUser, logoutUser } from './utils/auth';
 import {
   convertCurrency,
   getCurrencyInfo,
   fetchLiveExchangeRates,
   DEFAULT_RATES_FROM_INR
 } from './utils/currencies';
+import { API_BASE } from './utils/api';
 import './index.css';
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'https://expense-tracker-5i3x.onrender.com').replace(/\/+$/, '');
-
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
   const [expenses, setExpenses] = useState([]);
   const [trash, setTrash] = useState([]);
   const [isTrashOpen, setIsTrashOpen] = useState(false);
@@ -340,6 +342,26 @@ export default function App() {
     currency: rawEditingExpense.currency || currencyMap[rawEditingExpense.id] || 'INR'
   } : null;
 
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    logoutUser();
+    setCurrentUser(null);
+  };
+
+  // Auth Guard: If not signed in, show the sleek minimalist AuthPage
+  if (!currentUser) {
+    return (
+      <AuthPage
+        onLoginSuccess={handleLoginSuccess}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+    );
+  }
+
   return (
     <div className="container">
       {/* Minimalist Top Navigation Header */}
@@ -377,7 +399,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right Header: Travel-Style Currency Switcher & Smaller Night Mode Button */}
+        {/* Right Header: Travel-Style Currency Switcher, User Profile & Night Mode Button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           {/* Travel-style Dual Currency Split Pill Widget */}
           <CurrencyTravelWidget
@@ -388,6 +410,78 @@ export default function App() {
             onSelectCurrency={handleSelectTravelCurrency}
             onSetActiveCurrency={handleSetActiveCurrency}
           />
+
+          {/* User Profile Pill with Logout */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '4px 8px 4px 10px',
+            height: '44px',
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            boxShadow: 'var(--shadow-sm)'
+          }}>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '8px',
+              backgroundColor: 'var(--primary)',
+              color: 'var(--primary-text)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.825rem',
+              fontWeight: 700
+            }}>
+              {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '110px' }}>
+              <span style={{
+                fontSize: '0.785rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: 1.2
+              }}>
+                {currentUser.name || 'User'}
+              </span>
+              <span style={{
+                fontSize: '0.68rem',
+                color: 'var(--text-muted)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: 1.1
+              }}>
+                {currentUser.email || ''}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              style={{
+                marginLeft: '2px',
+                padding: '4px 8px',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--surface-hover)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}
+              title="Sign out of your account"
+            >
+              <span>Logout</span>
+            </button>
+          </div>
 
           {/* Smaller, compact Night Mode Toggle Button */}
           <button

@@ -5,13 +5,11 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    // Proxy API calls to the backend during development
-    proxy: {
+      // Proxy API calls to the local backend during development
       '/api': {
-        target: 'https://expense-tracker-5i3x.onrender.com',
+        target: 'http://localhost:5001',
         changeOrigin: true,
         secure: false
       }
-    }
   }
 });

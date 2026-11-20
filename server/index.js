@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -12,6 +13,7 @@ app.use(express.json());
 
 const DATA_FILE = path.join(__dirname, 'expenses.json');
 const TRASH_FILE = path.join(__dirname, 'trash.json');
+const USERS_FILE = path.join(__dirname, 'users.json');
 
 
 // Ensure data file exists with default sample data if empty
@@ -81,6 +83,79 @@ function saveTrash(trash) {
 }
 
 // =====================================================================
+// Authentication & Password Encryption Utilities (PBKDF2-SHA512 with Salt)
+// =====================================================================
+
+// Active session tokens map: token -> { userId, email, expiresAt }
+const sessions = new Map();
+
+function encryptClientPassword(password) {
+  if (!password) return '';
+  const CLIENT_PEPPER = 'expense_tracker_secure_client_pepper_v1';
+  let h = crypto.createHash('sha256').update(password + CLIENT_PEPPER).digest('hex');
+  for (let i = 0; i < 50; i++) {
+    h = crypto.createHash('sha256').update(h + CLIENT_PEPPER).digest('hex');
+  }
+  return h;
+}
+
+function hashPassword(password) {
+  // Generate cryptographically secure random 16-byte salt
+  const salt = crypto.randomBytes(16).toString('hex');
+  // Hash password using 100,000 iterations of PBKDF2 with SHA-512
+  const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, storedCombined) {
+  try {
+    const parts = storedCombined.split(':');
+    if (parts.length !== 2) return false;
+    const [salt, originalHash] = parts;
+    const verifyHash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+    // Direct match (for passwords hashed from client-encrypted string or matching string)
+    if (crypto.timingSafeEqual(Buffer.from(originalHash, 'hex'), Buffer.from(verifyHash, 'hex'))) {
+      return true;
+    }
+    // Backward compatibility: if user was registered before client pre-hashing
+    const clientHashed = encryptClientPassword(password);
+    const verifyHash2 = crypto.pbkdf2Sync(clientHashed, salt, 100000, 64, 'sha512').toString('hex');
+    if (crypto.timingSafeEqual(Buffer.from(originalHash, 'hex'), Buffer.from(verifyHash2, 'hex'))) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function loadUsers() {
+  try {
+    if (!fs.existsSync(USERS_FILE)) {
+      // Seed default demo user with client-encrypted password 'demo123'
+      const demoUser = {
+        id: 'user_demo_1',
+        name: 'Demo User',
+        email: 'demo@example.com',
+        passwordHash: hashPassword(encryptClientPassword('demo123')),
+        createdAt: new Date().toISOString()
+      };
+      fs.writeFileSync(USERS_FILE, JSON.stringify([demoUser], null, 2));
+      return [demoUser];
+    }
+    const raw = fs.readFileSync(USERS_FILE, 'utf-8');
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function saveUsers(users) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+}
+
+// =====================================================================
 // Route Indexing: Root and API Status
 // =====================================================================
 
@@ -93,6 +168,9 @@ app.get('/', (req, res) => {
     endpoints: {
       server_root: 'GET /',
       api_index: 'GET /api',
+      auth_register: 'POST /api/auth/register',
+      auth_login: 'POST /api/auth/login',
+      auth_me: 'GET /api/auth/me',
       expenses: 'GET /api/expenses',
       add_expense: 'POST /api/expenses',
       update_expense: 'PUT /api/expenses/:id',
@@ -111,10 +189,164 @@ app.get(['/api', '/api/status', '/api/health'], (req, res) => {
     message: 'Expense Tracker API is live',
     timestamp: new Date().toISOString(),
     endpoints: {
+      auth: {
+        register: 'POST /api/auth/register',
+        login: 'POST /api/auth/login',
+        me: 'GET /api/auth/me'
+      },
       expenses: '/api/expenses',
       trash: '/api/trash'
     }
   });
+});
+
+// =====================================================================
+// Authentication Routes (with Salted PBKDF2 Encrypted Passwords)
+// =====================================================================
+
+// POST Register
+app.post(['/api/auth/register', '/auth/register'], (req, res) => {
+  try {
+    const { name, email, password } = req.body || {};
+
+    if (!name || name.trim().length < 2) {
+      return res.status(400).json({ message: 'Name must be at least 2 characters long' });
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ message: 'Please provide a valid email address' });
+    }
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
+    const users = loadUsers();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = users.find(u => u.email.toLowerCase() === normalizedEmail);
+    if (existingUser) {
+      return res.status(409).json({ message: 'An account with this email already exists' });
+    }
+
+    // Encrypt password using Salted PBKDF2-SHA512
+    const passwordHash = hashPassword(password);
+    const newUser = {
+      id: 'usr_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash,
+      createdAt: new Date().toISOString()
+    };
+
+    users.push(newUser);
+    saveUsers(users);
+
+    // Issue secure session token
+    const token = crypto.randomBytes(32).toString('hex');
+    sessions.set(token, {
+      userId: newUser.id,
+      email: newUser.email,
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email
+      }
+    });
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ message: 'Internal server error during registration' });
+  }
+});
+
+// POST Login
+app.post(['/api/auth/login', '/auth/login'], (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    const users = loadUsers();
+    const identifier = email.trim().toLowerCase();
+
+    // Support login by email or name/username
+    const user = users.find(u => u.email.toLowerCase() === identifier || u.name.toLowerCase() === identifier);
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Verify encrypted password with timing-safe comparison
+    const isValid = verifyPassword(password, user.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Issue secure session token
+    const token = crypto.randomBytes(32).toString('hex');
+    sessions.set(token, {
+      userId: user.id,
+      email: user.email,
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
+    res.json({
+      success: true,
+      message: 'Logged in successfully',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error during login' });
+  }
+});
+
+// GET Current User Profile
+app.get(['/api/auth/me', '/auth/me'], (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+    if (!token || !sessions.has(token)) {
+      return res.status(401).json({ message: 'Unauthorized or session expired' });
+    }
+
+    const session = sessions.get(token);
+    if (session.expiresAt && session.expiresAt < Date.now()) {
+      sessions.delete(token);
+      return res.status(401).json({ message: 'Session expired. Please log in again.' });
+    }
+
+    const users = loadUsers();
+    const user = users.find(u => u.id === session.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error('Auth verification error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 // =====================================================================
